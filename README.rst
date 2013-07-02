@@ -9,7 +9,7 @@ TracMailman is a plugin for Trac that integrates with Mailman,
 allowing users to browse mailing list archives and search the
 mailing list, all from a tab within Trac.
 
-Created by Spencer Fang <sfang@lbl.gov> and Theron Ji <tji@lbl.gov>
+Created by Spencer Fang <sfang@lbl.gov> and Theron Ji <tji@lbl.gov>.
 
 Contents
 --------
@@ -47,7 +47,7 @@ Functionality
 This plugin adds a TracMailman tab inside of trac. Users logged in
 will be able to click on this tab and be taken to a search page,
 where they can choose to search a particular mailing list (or 'All'),
-or browse through the mailing lists, all within trac.
+or browse through the mailing lists, all within Trac.
 
 This plugin handles privacy concerns by looking at a manually specified
 list of mailing lists inside the trac.ini configuration file, and
@@ -74,7 +74,7 @@ Installation
 8. Set up a cron job or some script to periodically run swish-e.sh to
    re-index the archives to keep the search up-to-date.
 
-.. [*] The private mailman archive (/var/lib/mailman/archives/private)
+.. [*] The private mailman archive (``/var/lib/mailman/archives/private``)
    has read permission restricted to root or the mailman group, by default. In
    order for Trac to be able to read these files, and the Swish-e script to be
    able index these files, they must be run with appropriate permissions.
@@ -89,19 +89,19 @@ the [tracmailman] section:
     As mentioned above, this will be a comma separated
     list of mailing lists that should not be made publicly searchable or
     browsable. Obsolete lists that still remain archived but are no longer
-    of any use may also be put here. This is NOT related to the private
-    directory created by default under /var/lib/mailman/archives/private.
+    of any use may also be put here. This is **not** related to the private
+    directory created by default under ``/var/lib/mailman/archives/private``.
     Defaults to nothing.
 
 **mail_archive_path**
     This should be set to the full path to the top-
     level directory of where the mailman archives are stored. Default
-    location is at /var/lib/mailman/archives/
+    location is at ``/var/lib/mailman/archives``.
 
 **search_index_path**
     This should be set to the full path of where
-    the search indices created by Swish-e are located. This MUST be the
-    same as the INDEX_LOCATION variable in the swish-e.sh script.
+    the search indices created by Swish-e are located. This **must** be the
+    same as the ``$INDEX_LOCATION`` variable in the swish-e.sh script.
 
 
 Configuring Swish-e

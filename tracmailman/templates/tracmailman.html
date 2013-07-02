@@ -19,15 +19,15 @@
     <form action="tracmailman/search" method="post" id="update">
       <input type="text" name="query" value="$query"/>
       <select name="search_list">
-        <option value="all" selected="True">All lists</option>
+        <option value="all" selected="selected">All lists</option>
         <py:for each="list in mail_archives">
           <option value="$list">$list</option>
         </py:for>
       </select>
-      <input type="submit" value="Search"/>      
+      <input type="submit" value="Search"/>
     </form>
-    
-    
+
+
     <h3>Browse Mailing Archives</h3>
     <p>
       Choose an archive to browse.
@@ -44,7 +44,7 @@
     </ul>
     <br/>
   </py:if>
-  
+
   <p>
   Documentation on all search capabilities can be found <a href="http://swish-e.org/docs/swish-search.html#searching_syntax_and_operations">here</a>.
   </p>
