@@ -39,6 +39,7 @@ Requirements
 - Swish-e (2.4.5 or above recommended)
 - `Python Swish-e bindings`_ (0.5 or above recommended)
 
+.. _`Python Swish-e bindings`: http://pypi.python.org/pypi/Swish-E/0.5
 
 Functionality
 -------------
@@ -68,11 +69,15 @@ Installation
 5. Add the contents of trac-mailman.ini to the trac.ini file inside
    your Trac project (default location under yourproject/conf/)
 6. Set the appropriate variables in swish-e.sh. (see 'Configuring
-   Swish-e' below). Run it to create the index files[*]_.
-7. Restart the Trac daemon[*]_ - the plugin should now be functional
+   Swish-e' below). Run it to create the index files [*]_.
+7. Restart the Trac daemon [*]_ - the plugin should now be functional
 8. Set up a cron job or some script to periodically run swish-e.sh to
-   re-index the archives to keep the search up-to-date[*]_.
+   re-index the archives to keep the search up-to-date [*]_.
 
+.. [*] The private mailman archive (/var/lib/mailman/archives/private)
+   has read permission restricted to root or the mailman group, by default. In
+   order for Trac to be able to read these files, and the Swish-e script to be
+   able index these files, they must be run with appropriate permissions.
 
 Configuring trac.ini
 --------------------
@@ -108,9 +113,3 @@ and an index file to search in. The config file for Swish-e is included,
 file should NOT be changed, but modifications should be made to the
 swish-e.sh script to tell it 1) where the config file is, and 2) where to
 store the indices created by the search engine.
-
-.. [*] The private mailman archive (/var/lib/mailman/archives/private)
-    has read permission restricted to root or the mailman group, by default. In
-    order for Trac to be able to read these files, and the Swish-e script to be
-    able index these files, they must be run with appropriate permissions.
-.. _`Python Swish-e bindings`: http://pypi.python.org/pypi/Swish-E/0.5
