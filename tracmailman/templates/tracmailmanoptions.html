@@ -1,0 +1,93 @@
+<!DOCTYPE html
+	  PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+	  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:xi="http://www.w3.org/2001/XInclude"
+      xmlns:py="http://genshi.edgewall.org/">
+  <xi:include href="layout.html" />
+  <xi:include href="macros.html" />
+
+
+  <head>
+    <title>$title</title>
+  </head>
+  <body>
+    <style type="text/css">
+      table.updateMessages
+      {
+      background-color: lightyellow;
+      border-collapse: collapse; border: 1px solid black;
+      }
+    </style>
+
+    <div id="content" class="tracmailman">
+      <h1>Mailing List Options</h1>
+
+      <py:if test="authenticated">
+	<py:if test="hasEmail">
+	  <a href="$back_url">Go back to TracMailMan</a>
+	  <p>Showing subscribed mailing lists for <i>$hasEmail.email</i>. If you need
+	    access to additional mailing lists, visit
+	    <a href="$manual_subscribe_url">$manual_subscribe_url</a>
+	  </p>
+
+	  <form action="options" method="post" id="update">
+	    <table border="0" cellpadding="0" cellspacing="15">
+	      <tr>
+		<td><b>List Name</b></td>
+		<td><b>Receive Mail?</b></td>
+		<td><b>Digest?*</b></td>
+		<td><b>Owner?</b></td>
+	      </tr>
+	      <py:for each="list in hasEmail.lists.itervalues()">
+		<tr>
+		  <td>
+		    <p>$list.name</p>
+		  </td>
+		  <td>
+		    <input type="checkbox"
+			   id="checkbox_mailEnabled_$list.name" 
+			   name="mailEnabled_$list.name"
+			   checked="${list.mailEnabled == True or None}"
+			   />
+		  </td>
+		  <td>
+		    <py:if test="list.digests_noedit">
+		      <py:if test="list.digests">
+			<p>Yes</p>
+		      </py:if>
+		      <py:if test="not list.digests">
+			<p>No</p>
+		      </py:if>
+		    </py:if>
+		    <py:if test="not list.digests_noedit">
+		      <input type="checkbox"
+			     id="checkbox_digests_$list.name" 
+			     name="digests_$list.name"
+			     checked="${list.digests == True or None}"
+			     />
+		    </py:if>
+		  </td>
+		  <td>
+		    <py:if test="list.ownership">Yes</py:if>
+		    <py:if test="not list.ownership">No</py:if>
+		  </td>
+		</tr>
+	      </py:for>
+	    </table>
+	    
+	    <input type="submit" name="button_submit" value="Make changes" />
+	  </form>
+	  
+	  <br/><br/>
+	  <p>* Some mailing lists may require digest mode, and some may not
+	    allow digest mode. If a mailing list has such a policy, you will see
+	    a "Yes" or "No" instead of a check box.</p>
+	</py:if>
+	
+      </py:if>
+    </div>
+    
+  </body>
+
+</html>

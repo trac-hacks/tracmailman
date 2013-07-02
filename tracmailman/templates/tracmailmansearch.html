@@ -1,0 +1,70 @@
+<!DOCTYPE html
+	  PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+	  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:xi="http://www.w3.org/2001/XInclude"
+      xmlns:py="http://genshi.edgewall.org/">
+  <xi:include href="layout.html" />
+  <xi:include href="macros.html" />
+
+
+  <head>
+    <title>$title</title>
+  </head>
+  <body>
+    <style type="text/css">
+      table.updateMessages
+      {
+      background-color: lightyellow;
+      border-collapse: collapse; border: 1px solid black;
+      }
+    </style>
+
+    <div id="content" class="tracswishe">
+      <h1>Mailing List Search</h1>
+      
+      <py:if test="authenticated">
+	<form action="search" method="get" id="update">
+	  <input type="text" name="query" value="$query"/>
+	  <select name="search_list">
+        <option value="all">All lists</option>
+        <py:for each="list in mail_archives">
+            <py:choose test="search_list">
+                <py:when test="list"><option value="$list" selected="True">$list</option></py:when>
+                <py:otherwise><option value="$list">$list</option></py:otherwise>
+            </py:choose>
+        </py:for>
+      </select>
+	  <input type="submit" value="Search"/>
+	</form>
+	
+	<py:if test="numHits == 0">
+	  <h2>No results</h2>
+	</py:if>
+	<py:if test="results">
+	  <h2>Results: $numHits found. Displaying results ${firstHit+1} to $lastHit</h2>
+	  <hr/>
+	  <py:for each="hit in results">
+	    <p>
+	      $hit.number . <a href="$hit.path">$hit.title</a>
+	      <br/>
+	      <i>$hit.description ...</i>
+	      <br/>
+	    </p>
+	  </py:for>
+	  <p>Result Navigation: 
+	    <py:for each="i in range(0, maxPage)">
+	      <py:if test="i == currentPage">
+		${i+1}
+	      </py:if>
+	      <py:if test="not i == currentPage">
+		<a href="search?query=$query&amp;search_list=$search_list&amp;page=${i+1}">${i+1}</a>
+	      </py:if>
+	    </py:for>
+	  </p>
+
+	</py:if>
+      </py:if>
+    </div>
+  </body>
+</html>

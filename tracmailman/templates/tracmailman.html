@@ -1,0 +1,52 @@
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:xi="http://www.w3.org/2001/XInclude"
+      xmlns:py="http://genshi.edgewall.org/">
+<xi:include href="layout.html" />
+<xi:include href="macros.html" />
+
+
+<head>
+  <title>$title</title>
+</head>
+
+<body>
+  <h1>Mailing List Search</h1>
+  <py:if test="authenticated">
+
+    <form action="tracmailman/search" method="post" id="update">
+      <input type="text" name="query" value="$query"/>
+      <select name="search_list">
+        <option value="all" selected="True">All lists</option>
+        <py:for each="list in mail_archives">
+          <option value="$list">$list</option>
+        </py:for>
+      </select>
+      <input type="submit" value="Search"/>      
+    </form>
+    
+    
+    <h3>Browse Mailing Archives</h3>
+    <p>
+      Choose an archive to browse.
+    </p>
+    <ul>
+      <py:for each="list in mail_archives">
+        <py:if test="list in pub_archives">
+          <li><a href="tracmailman/browser/public/$list/index.html">$list</a></li>
+        </py:if>
+        <py:if test="list in priv_archives">
+          <li><a href="tracmailman/browser/private/$list/index.html">$list</a></li>
+        </py:if>
+      </py:for>
+    </ul>
+    <br/>
+  </py:if>
+  
+  <p>
+  Documentation on all search capabilities can be found <a href="http://swish-e.org/docs/swish-search.html#searching_syntax_and_operations">here</a>.
+  </p>
+</body>
+</html>
