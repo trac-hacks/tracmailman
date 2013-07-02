@@ -14,7 +14,7 @@ Created by Spencer Fang <sfang@lbl.gov> and Theron Ji <tji@lbl.gov>
 Contents
 --------
 
-README
+README.rst
 setup.py
 swish-e.config
 swish-e.sh
