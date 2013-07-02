@@ -52,7 +52,7 @@ or browse through the mailing lists, all within trac.
 This plugin handles privacy concerns by looking at a manually specified
 list of mailing lists inside the trac.ini configuration file, and
 preventing searches or browsing on those lists. NOTE: this functionality
-is disabled for ALL users, including those who may have the proper
+is disabled for **all** users, including those who may have the proper
 permissions. It is conceivable that this feature is changed in later
 versions of the plugin.
 
@@ -70,9 +70,9 @@ Installation
    your Trac project (default location under yourproject/conf/)
 6. Set the appropriate variables in swish-e.sh. (see 'Configuring
    Swish-e' below). Run it to create the index files [*]_.
-7. Restart the Trac daemon [*]_ - the plugin should now be functional
+7. Restart the Trac daemon - the plugin should now be functional.
 8. Set up a cron job or some script to periodically run swish-e.sh to
-   re-index the archives to keep the search up-to-date [*]_.
+   re-index the archives to keep the search up-to-date.
 
 .. [*] The private mailman archive (/var/lib/mailman/archives/private)
    has read permission restricted to root or the mailman group, by default. In
@@ -85,7 +85,7 @@ Configuring trac.ini
 In the trac.ini configuration file, 3 items need to be specified under
 the [tracmailman] section:
 
-private_lists
+**private_lists**
     As mentioned above, this will be a comma separated
     list of mailing lists that should not be made publicly searchable or
     browsable. Obsolete lists that still remain archived but are no longer
@@ -93,12 +93,12 @@ private_lists
     directory created by default under /var/lib/mailman/archives/private.
     Defaults to nothing.
 
-mail_archive_path
+**mail_archive_path**
     This should be set to the full path to the top-
     level directory of where the mailman archives are stored. Default
     location is at /var/lib/mailman/archives/
 
-search_index_path
+**search_index_path**
     This should be set to the full path of where
     the search indices created by Swish-e are located. This MUST be the
     same as the INDEX_LOCATION variable in the swish-e.sh script.
@@ -110,6 +110,6 @@ Configuring Swish-e
 To use the search feature of the plugin, you must have Swish-e installed
 and an index file to search in. The config file for Swish-e is included,
 (swish-e.config), as well as a shell script (swish-e.sh). The swish-e.config
-file should NOT be changed, but modifications should be made to the
+file should **not** be changed, but modifications should be made to the
 swish-e.sh script to tell it 1) where the config file is, and 2) where to
 store the indices created by the search engine.
