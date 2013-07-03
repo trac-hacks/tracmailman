@@ -10,6 +10,7 @@ allowing users to browse mailing list archives and search the
 mailing list, all from a tab within Trac.
 
 Created by Spencer Fang <sfang@lbl.gov> and Theron Ji <tji@lbl.gov>.
+Additional development by Benjamin Weaver <baweaver@lbl.gov>.
 
 Contents
 --------
