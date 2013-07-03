@@ -2,12 +2,12 @@
 #
 # The location of the swish-e configuration file
 #
-CONFIG_LOCATION=/home/therji/tracmailman-plugin-0.2/swish-e.config
+CONFIG_LOCATION=/home/bweaver/mailman_indices/swish-e.config
 #
 # The location of where the indexes will be put (should be the same as
 # search_index_path in trac.ini).
 #
-search_index_path = /home/trac/desi/mailman_indices
+search_index_path=/home/bweaver/mailman_indices
 #
 # The location of the archive files (should be the same as mail_archive_path
 # in trac.ini).
