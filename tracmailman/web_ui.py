@@ -166,7 +166,7 @@ class MailManPluginBrowser(Component):
         extension= result.group(4)
 
         # Check if user is trying to access a private list
-        if listname in self.env.config.get('tracmailman', 'private_lists'):
+        if listname in self.env.config.getlist('tracmailman', 'private_lists'):
             chrome.add_warning(req, 'This list is private and not browsable. Please go through the standard Mailman interface.')
             return 'tracmailmanbrowser.html', data, 'text/html'
 
@@ -175,7 +175,7 @@ class MailManPluginBrowser(Component):
         if os.path.isfile(path):
             archivedMail = open(path, 'r').read()
             if extension == 'html':
-                html = HTML(archivedMail)
+                html = HTML(archivedMail,encoding='utf-8')
                 # At this point, the HTML document is turned into a Genshi
                 # object. For more info on how to transform the HTML
                 # object using Genshi:

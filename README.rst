@@ -5,12 +5,15 @@ TracMailman
 About
 -----
 
-TracMailman is a plugin for Trac that integrates with Mailman,
+TracMailman is a plugin for Trac_ that integrates with Mailman_,
 allowing users to browse mailing list archives and search the
 mailing list, all from a tab within Trac.
 
 Created by Spencer Fang <sfang@lbl.gov> and Theron Ji <tji@lbl.gov>.
 Additional development by Benjamin Weaver <baweaver@lbl.gov>.
+
+.. _Trac: http://trac.edgewall.org
+.. _Mailman: http://www.list.org
 
 Contents
 --------
@@ -35,17 +38,18 @@ Contents
 Requirements
 ------------
 
-- Trac (0.11.1 recomended)
-- MailMan (2.1.11 recomended)
-- Swish-e (2.4.5 or above recommended)
+- Trac_ (0.11.1 or above recomended)
+- Mailman_ (2.1.11 or above recomended)
+- Swish-e_ (2.4.5 or above recommended)
 - `Python Swish-e bindings`_ (0.5 or above recommended)
 
+.. _Swish-e: http://swish-e.org
 .. _`Python Swish-e bindings`: http://pypi.python.org/pypi/Swish-E/0.5
 
 Functionality
 -------------
 
-This plugin adds a TracMailman tab inside of trac. Users logged in
+This plugin adds a 'Mailing Lists' tab inside of trac. Users logged in
 will be able to click on this tab and be taken to a search page,
 where they can choose to search a particular mailing list (or 'All'),
 or browse through the mailing lists, all within Trac.
@@ -56,7 +60,6 @@ preventing searches or browsing on those lists. NOTE: this functionality
 is disabled for **all** users, including those who may have the proper
 permissions. It is conceivable that this feature is changed in later
 versions of the plugin.
-
 
 Installation
 ------------
@@ -84,7 +87,7 @@ Configuring trac.ini
 --------------------
 
 In the trac.ini configuration file, 3 items need to be specified under
-the [tracmailman] section:
+the ``[tracmailman]`` section:
 
 **private_lists**
     As mentioned above, this will be a comma separated
@@ -103,7 +106,6 @@ the [tracmailman] section:
     This should be set to the full path of where
     the search indices created by Swish-e are located. This **must** be the
     same as the ``$INDEX_LOCATION`` variable in the swish-e.sh script.
-
 
 Configuring Swish-e
 -------------------
