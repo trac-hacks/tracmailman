@@ -3,6 +3,7 @@ from trac.core import *
 from trac.web import chrome
 from trac.web.chrome import INavigationContributor, ITemplateProvider
 from trac.web.main import IRequestHandler
+from trac.perm import IPermissionRequestor
 from trac.util import escape, Markup
 
 import sys # Workaround for: http://trac.edgewall.org/ticket/5628
@@ -32,7 +33,11 @@ class MailManPluginIndex(Component):
     with a drop-down list of all the mailing lists to search by, as well as
     a list of the mailing archives for manual browsing.
     """
-    implements(INavigationContributor, IRequestHandler, ITemplateProvider)
+    implements(INavigationContributor, IRequestHandler, ITemplateProvider, IPermissionRequestor)
+
+    # IPermissionRequestor methods
+    def get_permission_actions(self):
+        return ['MAILMAN_VIEW',('MAILMAN_ADMIN', ['MAILMAN_VIEW'])]
 
     # INavigationContributor methods
     def get_active_navigation_item(self, req):
@@ -42,10 +47,10 @@ class MailManPluginIndex(Component):
         """
         Display a tab for TracMailMan at the top nav bar
         """
-        if req.authname == 'anonymous' or not req.session.authenticated:
-            yield 'mainnav', 'tracmailman', None
-        else:
+        if req.perm.has_permission("MAILMAN_VIEW"):
             yield 'mainnav', 'tracmailman', Markup('<a href="%s">Mailing Lists</a>' % (self.env.href.tracmailman()))
+        else:
+            yield 'mainnav', 'tracmailman', None
 
     # IRequestHandler methods
     def match_request(self, req):
@@ -57,7 +62,7 @@ class MailManPluginIndex(Component):
 
 
     def process_request(self, req):
-
+        req.perm.require("MAILMAN_VIEW")
         # The full path to where the mailman archives are stored
         mail_archive_path = self.env.config.get('tracmailman', 'mail_archive_path')
         if mail_archive_path[-1] != '/':
@@ -90,6 +95,7 @@ class MailManPluginIndex(Component):
         data['mail_archives'].sort()
         return 'tracmailman.html', data, 'text/html'
 
+    # ITemplateProvider methods
     def get_htdocs_dirs(self):
         from pkg_resources import resource_filename
         return [('tracmailman', resource_filename(__name__, 'templates'))]
@@ -120,7 +126,11 @@ class MailManPluginBrowser(Component):
     template to preserve the look and feel of the Trac interface.
 
     """
-    implements(IRequestHandler, ITemplateProvider)
+    implements(IRequestHandler, ITemplateProvider, IPermissionRequestor)
+
+    # IPermissionRequestor methods
+    def get_permission_actions(self):
+        return ['MAILMAN_VIEW',('MAILMAN_ADMIN', ['MAILMAN_VIEW'])]
 
     # IRequestHandler methods
     def match_request(self, req):
@@ -132,6 +142,7 @@ class MailManPluginBrowser(Component):
 
 
     def process_request(self, req):
+        req.perm.require("MAILMAN_VIEW")
         # This is a workaround for bug: http://trac.edgewall.org/ticket/5628
         reload(sys)
         if sys.getdefaultencoding() == 'ascii':
@@ -211,6 +222,7 @@ class MailManPluginBrowser(Component):
 
             return 'tracmailmanbrowser.html', data, 'text/html'
 
+    # ITemplateProvider methods
     def get_htdocs_dirs(self):
         from pkg_resources import resource_filename
         return [('tracmailman', resource_filename(__name__, 'templates'))]
@@ -221,7 +233,11 @@ class MailManPluginBrowser(Component):
 
 
 class TracMailManSearchPlugin(Component):
-    implements(IRequestHandler, ITemplateProvider)
+    implements(IRequestHandler, ITemplateProvider, IPermissionRequestor)
+
+    # IPermissionRequestor methods
+    def get_permission_actions(self):
+        return ['MAILMAN_VIEW',('MAILMAN_ADMIN', ['MAILMAN_VIEW'])]
 
     # IRequestHandler methods
     def match_request(self, req):
@@ -233,6 +249,7 @@ class TracMailManSearchPlugin(Component):
 
 
     def process_request(self, req):
+        req.perm.require("MAILMAN_VIEW")
         # This is a workaround for bug: http://trac.edgewall.org/ticket/5628
         reload(sys)
         if sys.getdefaultencoding() == 'ascii':
@@ -390,6 +407,7 @@ class TracMailManSearchPlugin(Component):
         return 'tracmailmansearch.html', data, 'text/html'
 
 
+    # ITemplateProvider methods
     def get_htdocs_dirs(self):
         from pkg_resources import resource_filename
         return [('tracswishe', resource_filename(__name__, 'templates'))]
