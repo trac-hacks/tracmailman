@@ -5,20 +5,19 @@
       xmlns:xi="http://www.w3.org/2001/XInclude"
       xmlns:py="http://genshi.edgewall.org/">
   <xi:include href="layout.html" />
-  <xi:include href="macros.html" />
 
 
   <head>
     <title>$title</title>
-  </head>
-  <body>
-    <style type="text/css">
+	<style type="text/css">
       table.updateMessages
       {
       background-color: lightyellow;
       border-collapse: collapse; border: 1px solid black;
       }
     </style>
+  </head>
+  <body>
 
     <div id="content" class="tracmailman">
       <h1>Mailing List Options</h1>
@@ -46,7 +45,7 @@
 		  </td>
 		  <td>
 		    <input type="checkbox"
-			   id="checkbox_mailEnabled_$list.name" 
+			   id="checkbox_mailEnabled_$list.name"
 			   name="mailEnabled_$list.name"
 			   checked="${list.mailEnabled == True or None}"
 			   />
@@ -62,7 +61,7 @@
 		    </py:if>
 		    <py:if test="not list.digests_noedit">
 		      <input type="checkbox"
-			     id="checkbox_digests_$list.name" 
+			     id="checkbox_digests_$list.name"
 			     name="digests_$list.name"
 			     checked="${list.digests == True or None}"
 			     />
@@ -75,19 +74,19 @@
 		</tr>
 	      </py:for>
 	    </table>
-	    
+
 	    <input type="submit" name="button_submit" value="Make changes" />
 	  </form>
-	  
+
 	  <br/><br/>
 	  <p>* Some mailing lists may require digest mode, and some may not
 	    allow digest mode. If a mailing list has such a policy, you will see
 	    a "Yes" or "No" instead of a check box.</p>
 	</py:if>
-	
+
       </py:if>
     </div>
-    
+
   </body>
 
 </html>
