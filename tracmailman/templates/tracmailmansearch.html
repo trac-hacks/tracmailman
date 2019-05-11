@@ -5,7 +5,6 @@
       xmlns:xi="http://www.w3.org/2001/XInclude"
       xmlns:py="http://genshi.edgewall.org/">
   <xi:include href="layout.html" />
-  <xi:include href="macros.html" />
 
 
   <head>
@@ -22,7 +21,7 @@
 
     <div id="content" class="tracswishe">
       <h1>Mailing List Search</h1>
-      
+
       <py:if test="authenticated">
 	<form action="search" method="get" id="update">
 	  <input type="text" name="query" value="$query"/>
@@ -37,7 +36,7 @@
       </select>
 	  <input type="submit" value="Search"/>
 	</form>
-	
+
 	<py:if test="numHits == 0">
 	  <h2>No results</h2>
 	</py:if>
@@ -52,7 +51,7 @@
 	      <br/>
 	    </p>
 	  </py:for>
-	  <p>Result Navigation: 
+	  <p>Result Navigation:
 	    <py:for each="i in range(0, maxPage)">
 	      <py:if test="i == currentPage">
 		${i+1}
