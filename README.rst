@@ -38,7 +38,7 @@ Contents
 Requirements
 ------------
 
-- Trac_ (0.11.1 or above recomended)
+- Trac_ (1.6 or above recomended)
 - Mailman_ (2.1.11 or above recomended)
 - Swish-e_ (2.4.5 or above recommended)
 

@@ -2,7 +2,7 @@ from setuptools import setup
 
 
 PACKAGE = 'tracmailman'
-VERSION = '1.0.0b1'
+VERSION = '1.0.0'
 SUMMARY = 'A Trac plugin integrating searching of Mailman archives.'
 AUTHOR = 'Theron Ji, Spencer Fang, Benjamin Weaver'
 EMAIL = 'benjamin.weaver@noirlab.edu'
