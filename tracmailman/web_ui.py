@@ -1,21 +1,17 @@
-from trac.config import ListOption
+import os.path
+import re
+import subprocess as sub
+
+# from trac.config import ListOption
 from trac.core import *
 from trac.web import chrome
 from trac.web.chrome import INavigationContributor, ITemplateProvider
 from trac.web.main import IRequestHandler
 from trac.perm import IPermissionRequestor
-from trac.util import escape, Markup
+from trac.util.html import Markup
 
-import sys # Workaround for: http://trac.edgewall.org/ticket/5628
-import os.path
-import re
-import getopt
-import paths
-
-import SwishE
-
-from genshi.input import HTML
-from genshi.filters import HTMLSanitizer
+from bs4 import BeautifulSoup
+from bs4.element import Tag as bs4Tag
 
 
 def authenticated(req):
@@ -27,17 +23,69 @@ def authenticated(req):
         return False
     return True
 
-class MailManPluginIndex(Component):
+
+class _MailmanPluginCore(Component):
+    """Common methods for all components, to prevent code reuse.
+    """
+    _mail_archive_path = None
+    _private_lists = None
+    _private_archives = None
+    _public_archives = None
+
+    # IPermissionRequestor methods
+    def get_permission_actions(self):
+        return ['MAILMAN_VIEW', ('MAILMAN_ADMIN', ['MAILMAN_VIEW'])]
+
+    # ITemplateProvider methods
+    def get_htdocs_dirs(self):
+        from pkg_resources import resource_filename
+        return [('tracmailman', resource_filename(__name__, 'templates'))]
+
+    def get_templates_dirs(self):
+        from pkg_resources import resource_filename
+        return [resource_filename(__name__, 'templates')]
+
+    # Other common functionality
+    def mail_archive_path(self):
+        if self._mail_archive_path is None:
+            path = self.env.config.get('tracmailman', 'mail_archive_path')
+            if path[-1] != '/':
+                path += '/'
+            self._mail_archive_path = path
+        return self._mail_archive_path
+
+    def private_lists(self):
+        if self._private_lists is None:
+            self._private_lists = self.env.config.getlist('tracmailman', 'private_lists')
+        return self._private_lists
+
+    def private_archives(self):
+        if self._private_archives is None:
+            self._private_archives = list()
+            for a in os.listdir(os.path.join(self.mail_archive_path(), 'private')):
+                if a not in self.private_lists() and a[-4:] != "mbox":
+                    self._private_archives.append(a)
+        return self._private_archives
+
+    def public_archives(self):
+        if self._public_archives is None:
+            self._public_archives = list()
+            for a in os.listdir(os.path.join(self.mail_archive_path(), 'public')):
+                if a not in self.private_lists() and a[-4:] != "mbox" and a not in self.private_archives():
+                    self._public_archives.append(a)
+        return self._public_archives
+
+    def mail_archives(self):
+        return list(sorted(self.private_archives() + self.public_archives()))
+
+
+class MailManPluginIndex(_MailmanPluginCore):
     """
     The main page of the TracMailman plugin. This displays the search box,
     with a drop-down list of all the mailing lists to search by, as well as
     a list of the mailing archives for manual browsing.
     """
     implements(INavigationContributor, IRequestHandler, ITemplateProvider, IPermissionRequestor)
-
-    # IPermissionRequestor methods
-    def get_permission_actions(self):
-        return ['MAILMAN_VIEW',('MAILMAN_ADMIN', ['MAILMAN_VIEW'])]
 
     # INavigationContributor methods
     def get_active_navigation_item(self, req):
@@ -60,52 +108,28 @@ class MailManPluginIndex(Component):
         """
         return re.match(r'^/tracmailman$', req.path_info)
 
-
     def process_request(self, req):
         req.perm.require("MAILMAN_VIEW")
         # The full path to where the mailman archives are stored
-        mail_archive_path = self.env.config.get('tracmailman', 'mail_archive_path')
-        if mail_archive_path[-1] != '/':
-            mail_archive_path += '/'
 
         data = {}
         data['title'] = 'Mailing List Search'
         # The default content is an error message. If the code below
         # is successful, it will replace the error with real content
         data['contents'] = 'An error has occured. Please hit "Back" on your browser and try again.'
+        data['authenticated'] = authenticated(req)
+        if not data['authenticated']:
+            return 'tracmailman.html', data
 
-        if not authenticated(req):
-            return 'tracmailman.html', data, 'text/html'
-        else:
-            data['authenticated'] = True
+        # The lists of mailing list archives to be displayed.
+        data['priv_archives'] = self.private_archives()
+        data['pub_archives'] = self.public_archives()
+        data['mail_archives'] = self.mail_archives()
 
-        # The list of mailing list archives
-        data['mail_archives'] = []
-        data['priv_archives'] = []
-        data['pub_archives'] = []
-
-        # Add mailing lists to be displayed in the search and browser
-        for privarchive in os.listdir(mail_archive_path + 'private'):
-            if privarchive not in self.env.config.getlist('tracmailman', 'private_lists') and privarchive[-4:] != "mbox":
-                data['priv_archives'].append(privarchive)
-        for pubarchive in os.listdir(mail_archive_path + 'public'):
-            if pubarchive not in self.env.config.getlist('tracmailman', 'private_lists') and pubarchive[-4:] != "mbox" and pubarchive not in data['priv_archives']:
-                data['pub_archives'].append(pubarchive)
-        data['mail_archives'] = data['priv_archives'] + data['pub_archives']
-        data['mail_archives'].sort()
-        return 'tracmailman.html', data, 'text/html'
-
-    # ITemplateProvider methods
-    def get_htdocs_dirs(self):
-        from pkg_resources import resource_filename
-        return [('tracmailman', resource_filename(__name__, 'templates'))]
-
-    def get_templates_dirs(self):
-        from pkg_resources import resource_filename
-        return [resource_filename(__name__, 'templates')]
+        return 'tracmailman.html', data
 
 
-class MailManPluginBrowser(Component):
+class MailManPluginBrowser(_MailmanPluginCore):
     """
     Takes a request and serves the correct document.  A request such
     as
@@ -128,10 +152,6 @@ class MailManPluginBrowser(Component):
     """
     implements(IRequestHandler, ITemplateProvider, IPermissionRequestor)
 
-    # IPermissionRequestor methods
-    def get_permission_actions(self):
-        return ['MAILMAN_VIEW',('MAILMAN_ADMIN', ['MAILMAN_VIEW'])]
-
     # IRequestHandler methods
     def match_request(self, req):
         """
@@ -140,28 +160,20 @@ class MailManPluginBrowser(Component):
         """
         return re.match(r'^/tracmailman/browser/', req.path_info)
 
-
     def process_request(self, req):
         req.perm.require("MAILMAN_VIEW")
         # This is a workaround for bug: http://trac.edgewall.org/ticket/5628
-        reload(sys)
-        if sys.getdefaultencoding() == 'ascii':
-            sys.setdefaultencoding("latin1")
+        # reload(sys)
+        # if sys.getdefaultencoding() == 'ascii':
+        #     sys.setdefaultencoding("latin1")
         # End: workaround
-
-        # The full path to where the mailman archives are stored
-        mail_archive_path = self.env.config.get('tracmailman', 'mail_archive_path')
-        if mail_archive_path[-1] != '/':
-            mail_archive_path += "/"
 
         data = {}
         data['title'] = 'Mailing List Archive Browser'
-
+        data['authenticated'] = authenticated(req)
         # Check user is logged in
-        if not authenticated(req):
-            return 'tracmailmanbrowser.html', data, 'text/html'
-        else:
-            data['authenticated'] = True
+        if not data['authenticated']:
+            return 'tracmailmanbrowser.html', data
 
         # We won't respond to just anything. Let's use regexps to pull
         # out relevant tokens, and verify the tokens.
@@ -169,7 +181,7 @@ class MailManPluginBrowser(Component):
         result = re.search(r'^/tracmailman/browser/(public|private)/([^/]+)/([^.]+)\.(html|txt|txt\.gz)$', req.path_info)
         if result is None:
             chrome.add_warning(req, 'The URL you requested is does not refer to a valid document')
-            return 'tracmailmanbrowser.html', data, 'text/html'
+            return 'tracmailmanbrowser.html', data
 
         priv     = result.group(1)
         listname = result.group(2)
@@ -177,27 +189,29 @@ class MailManPluginBrowser(Component):
         extension= result.group(4)
 
         # Check if user is trying to access a private list
-        if listname in self.env.config.getlist('tracmailman', 'private_lists'):
+        if listname in self.private_lists():
             chrome.add_warning(req, 'This list is private and not browsable. Please go through the standard Mailman interface.')
-            return 'tracmailmanbrowser.html', data, 'text/html'
+            return 'tracmailmanbrowser.html', data
 
-
-        path = mail_archive_path + priv + '/' + listname + '/' + docID + '.' + extension
+        path = self.mail_archive_path() + priv + '/' + listname + '/' + docID + '.' + extension
         if os.path.isfile(path):
-            archivedMail = open(path, 'r').read()
+            with open(path, 'r') as archivedFile:
+                archivedMail = archivedFile.read()
             if extension == 'html':
-                html = HTML(archivedMail,encoding='utf-8')
+                # html = HTML(archivedMail, encoding='utf-8')
                 # At this point, the HTML document is turned into a Genshi
                 # object. For more info on how to transform the HTML
                 # object using Genshi:
                 # http://genshi.edgewall.org/wiki/ApiDocs
                 #
-                sanitized = html.select('body/*') | HTMLSanitizer()
-                contents = sanitized.render('html')
-                contents = re.sub(r'<a name=.+?a>',"",contents)
+                # sanitized = html.select('body/*') | HTMLSanitizer()
+                # contents = sanitized.render('html')
+                soup = BeautifulSoup(archivedMail, 'html.parser')
+                contents = '\n'.join([str(t) for t in filter(lambda x: isinstance(x, bs4Tag), soup.body.children)])
+                contents = re.sub(r'<a name=.+?a>', "", contents)
                 data['contents'] = Markup(contents)
                 data['title'] += " - " + listname
-                return 'tracmailmanbrowser.html', data, 'text/html'
+                return 'tracmailmanbrowser.html', data
             else:
                 req.send_response(200)
                 if extension == 'txt':
@@ -220,24 +234,15 @@ class MailManPluginBrowser(Component):
             else:
                 chrome.add_warning(req, 'The mail message that you requested cannot be found')
 
-            return 'tracmailmanbrowser.html', data, 'text/html'
-
-    # ITemplateProvider methods
-    def get_htdocs_dirs(self):
-        from pkg_resources import resource_filename
-        return [('tracmailman', resource_filename(__name__, 'templates'))]
-
-    def get_templates_dirs(self):
-        from pkg_resources import resource_filename
-        return [resource_filename(__name__, 'templates')]
+            return 'tracmailmanbrowser.html', data
 
 
-class TracMailManSearchPlugin(Component):
+class TracMailManSearchPlugin(_MailmanPluginCore):
     implements(IRequestHandler, ITemplateProvider, IPermissionRequestor)
 
-    # IPermissionRequestor methods
-    def get_permission_actions(self):
-        return ['MAILMAN_VIEW',('MAILMAN_ADMIN', ['MAILMAN_VIEW'])]
+    # swishFormat = '{"title": "%t", "path": "%p", "description": "%d"}\\n'
+    swishFormat = '||%t||%p||%d||\\n'
+    titleRegex = re.compile(r'^\[(.+?)\s(\d+)\].*')
 
     # IRequestHandler methods
     def match_request(self, req):
@@ -247,19 +252,16 @@ class TracMailManSearchPlugin(Component):
         """
         return req.path_info == '/tracmailman/search'
 
-
     def process_request(self, req):
         req.perm.require("MAILMAN_VIEW")
         # This is a workaround for bug: http://trac.edgewall.org/ticket/5628
-        reload(sys)
-        if sys.getdefaultencoding() == 'ascii':
-            sys.setdefaultencoding("latin1")
+        # reload(sys)
+        # if sys.getdefaultencoding() == 'ascii':
+        #     sys.setdefaultencoding("latin1")
         # End: workaround
 
         # The full path to where the mailman archives are stored
-        mail_archive_path = self.env.config.get('tracmailman', 'mail_archive_path')
-        if mail_archive_path[-1] != '/':
-            mail_archive_path += '/'
+        mail_archive_path = self.mail_archive_path()
 
         # The full path to where the indices are stored
         search_index_path = self.env.config.get('tracmailman', 'search_index_path')
@@ -267,154 +269,139 @@ class TracMailManSearchPlugin(Component):
             search_index_path += '/'
 
         # The private archives not to be searched
-        private_archives = self.env.config.getlist('tracmailman', 'private_lists')
+        private_lists = self.private_lists()
 
         data = {}
         data['title'] = 'Mailing List Search'
+        data['authenticated'] = authenticated(req)
 
         # Check the user is logged in
-        if not authenticated(req):
-            return 'tracmailmansearch.html', data, 'text/html'
-        else:
-            data['authenticated'] = True
+        if not data['authenticated']:
+            return 'tracmailmansearch.html', data
 
         # Add mailing lists to be displayed in the search
-        data['mail_archives'] = []
-
-        for privarchive in os.listdir(mail_archive_path + 'private'):
-            if privarchive not in private_archives and privarchive[-4:] != "mbox":
-                data['mail_archives'].append(privarchive)
-        for pubarchive in os.listdir(mail_archive_path + 'public'):
-            if pubarchive not in private_archives and pubarchive[-4:] != "mbox" and pubarchive not in data['mail_archives']:
-                data['mail_archives'].append(pubarchive)
-        data['mail_archives'].sort()
+        data['mail_archives'] = self.mail_archives()
 
         # Grab the search query
-        if req.args.has_key('query') and req.args['query'].strip():
-            query = req.args['query']
+        query = req.args.get('query', None)
+        if query is not None and query.strip():
             data['query'] = query
         else:
             chrome.add_warning(req, 'Please enter a query.')
-            return 'tracmailmansearch.html', data, 'text/html'
+            return 'tracmailmansearch.html', data
 
         # Grab which list the user searched
-        if req.args.has_key('search_list'):
-            search_list = req.args['search_list']
+        search_list = req.args.get('search_list', None)
+        if search_list is not None and search_list.strip():
             data['search_list'] = search_list
         else:
             chrome.add_warning(req, 'Please select a list to search from.')
-            return 'tracmailmansearch.html', data, 'text/html'
+            return 'tracmailmansearch.html', data
 
         # Get the search index for the particular list the user selected
         swishIndex  = search_index_path + search_list + '-index.swish-e'
 
-        try:
-            handle = SwishE.new(swishIndex)
-        except Exception, e:
-            chrome.add_warning(req, 'Search index not found. Please contact the administrator for help.')
-            return 'tracmailmansearch.html', data, 'text/html'
+        swishCommand = ['/usr/local/bin/swish-e', '-f', swishIndex,
+                        '-w', query,
+                        '-x', self.swishFormat]
 
-        # Run the query using the search engine
-        try:
-            swishResults = handle.query(query)
-        except Exception, e:
-            chrome.add_warning(req, 'Bad query: e.message')
-            return 'tracmailmansearch.html', data, 'text/html'
+        proc = sub.Popen(swishCommand, stdout=sub.PIPE, stderr=sub.PIPE)
+        out, err = proc.communicate()
+        results = out.decode('latin1')
+        if proc.returncode != 0:
+            if 'Could not open the index file' in results:
+                chrome_warn = f'Search index for "{search_list}" not found. It is possible that this mailing list has never been used. Browse "{search_list}" on the main Mailing Lists page to confirm.'
+            else:
+                chrome_warn = f'Unknown error. Message was "{results}".'
+            chrome.add_warning(req, chrome_warn)
+            return 'tracmailmansearch.html', data
 
-        # The number of hits
-        #numHits = swishResults.hits()
+        if 'err: no results' in results:
+            data['numHits'] = 0
+            chrome.add_warning(req, f'No results for "{query}".')
+            return 'tracmailmansearch.html', data
 
-        # If we searched all the mailing lists, remove the ones from the private lists
-        #if search_list == 'all':
-        #    for result in swishResults:
-        #        msg = result.getproperty('swishdocpath')
-        #        for private_list in private_archives:
-        #            if private_list in msg:
-        #                numHits -= 1
-        #
-        #data['numHits'] = numHits
-
-
-        ordered_results = []
-        for swishResult in swishResults:
-            title = swishResult.getproperty('swishtitle')
-            regex = re.match(r'^\[(.+?)\s(\d+)\].*', title)
-            if regex is None:
-                continue
-            list_name = regex.group(1)
-            list_num = int(regex.group(2))
-            # If we searched all the mailing lists, remove the ones from the private lists
-            if search_list == 'all' and list_name in private_archives:
-                continue
-            # Obtain the mailing list number for this mail
-            ordered_results.append((list_num,swishResult))
-        ordered_results.sort()
-        ordered_results = [result[1] for result in ordered_results]
+        ordered_results = self._parse_results(results, search_list)
         numHits = len(ordered_results)
         data['numHits'] = numHits
 
         if numHits == 0:
-            return 'tracmailmansearch.html', data, 'text/html'
+            chrome.add_warning(req, f'No results for "{query}".')
+            return 'tracmailmansearch.html', data
 
         # page and hitsPerPage are to control pagination
         hitsPerPage = 20
-        if req.args.has_key('page'):
+        req_page = req.args.get('page', None)
+        if req_page is not None:
             # For usability we want to let the user see "page=1", but
             # in reality, this maps to the 0th page
-            page = int(req.args['page']) - 1
+            page = int(req_page) - 1
         else:
             page = 0
 
         data['currentPage'] = page
-        data['maxPage'] = numHits / hitsPerPage
+        data['maxPage'] = numHits // hitsPerPage
         if numHits % hitsPerPage > 0:
             data['maxPage'] += 1
 
-        results = []
+        data['results'] = []
         firstHit = page * hitsPerPage
         data['firstHit'] = firstHit
         data['lastHit'] = min(firstHit + hitsPerPage, numHits)
-        swishResults.seek(firstHit)
         seen = 0
         while((seen < hitsPerPage) and (firstHit + seen < numHits)):
             seen += 1
-            #sr = swishResults.next()
             sr = ordered_results[firstHit + seen - 1]
             hit = {}
-            diskPath = sr.getproperty('swishdocpath')
-            # Check if this msg is from a private list; if so, discard it
-            #valid = True
-            #for private_archive in private_archives:
-            #    if private_archive in diskPath:
-            #        valid = False
-            #        seen -= 1
-            #        break
-            #if not valid:
-            #    continue
-
-            webPath = diskPath.lstrip(mail_archive_path)
-            # Just in case there is still a leading '/'
-            webPath = webPath.lstrip('/')
-            hit['path'] = 'browser/' + webPath
-            # The rest of the data
+            hit['path'] = 'browser/' + sr['path'].lstrip(mail_archive_path).lstrip('/')
             hit['number'] = firstHit + seen
-            hit['title'] = sr.getproperty('swishtitle')
-            hit['description'] = sr.getproperty('swishdescription')
-            results.append(hit)
+            hit['title'] = sr['title']
+            hit['description'] = sr['description']
+            data['results'].append(hit)
 
-        data['results'] = results
         data['title'] += " - " + '"' + query + '"'
-        return 'tracmailmansearch.html', data, 'text/html'
+        return 'tracmailmansearch.html', data
 
+    def _parse_results(self, results, search_list):
+        """Parse results of a SwishE search.
 
-    # ITemplateProvider methods
-    def get_htdocs_dirs(self):
-        from pkg_resources import resource_filename
-        return [('tracswishe', resource_filename(__name__, 'templates'))]
+        Parameters
+        ----------
+        results : :class:`str`
+            The results returned by :command:`swish-e`.
+        search_list : :class:`str`
+            The name of the list in the search.
 
-
-    def get_templates_dirs(self):
-        from pkg_resources import resource_filename
-        return [resource_filename(__name__, 'templates')]
-
-
+        Returns
+        -------
+        :class:`list`
+            A :class:`list` of :class:`dict` with the parsed data.
+        """
+        private_lists = self.private_lists()
+        lines = results.split('\n')
+        hits = 0
+        ordered_results = list()
+        for line in lines:
+            ll = line.strip()
+            # if ll.startswith('# Number of hits:'):
+            #     hits = int(ll.split(':')[1].strip())
+            if ll.startswith('||'):
+                data = dict()
+                columns = ll.split('||')
+                data['title'] = columns[1]
+                data['path'] = columns[2]
+                data['description'] = columns[3]
+                regex = self.titleRegex.match(data['title'])
+                if regex is None:
+                    continue
+                list_name = regex.group(1)
+                list_num = int(regex.group(2))
+                # If we searched all the mailing lists, remove the ones from the private lists
+                if search_list == 'all' and list_name in private_lists:
+                    continue
+                data['list_name'] = list_name
+                data['list_number'] = list_num
+                ordered_results.append(data)
+        # if hits == len(ordered_results):
+        #     pass
+        return list(sorted(ordered_results, key=lambda x: x['list_number'], reverse=True))

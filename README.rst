@@ -10,10 +10,10 @@ allowing users to browse mailing list archives and search the
 mailing list, all from a tab within Trac.
 
 Created by Spencer Fang <sfang@lbl.gov> and Theron Ji <tji@lbl.gov>.
-Additional development by Benjamin Weaver <baweaver@lbl.gov>.
+Additional development by Benjamin Weaver <benjamin.weaver@noirlab.edu>.
 
-.. _Trac: http://trac.edgewall.org
-.. _Mailman: http://www.list.org
+.. _Trac: https://trac.edgewall.org
+.. _Mailman: https://www.list.org
 
 Contents
 --------
@@ -41,15 +41,13 @@ Requirements
 - Trac_ (0.11.1 or above recomended)
 - Mailman_ (2.1.11 or above recomended)
 - Swish-e_ (2.4.5 or above recommended)
-- `Python Swish-e bindings`_ (0.5 or above recommended)
 
 .. _Swish-e: http://swish-e.org
-.. _`Python Swish-e bindings`: http://pypi.python.org/pypi/Swish-E/0.5
 
 Functionality
 -------------
 
-This plugin adds a 'Mailing Lists' tab inside of trac. Users logged in
+This plugin adds a 'Mailing Lists' tab inside of Trac. Users logged in
 will be able to click on this tab and be taken to a search page,
 where they can choose to search a particular mailing list (or 'All'),
 or browse through the mailing lists, all within Trac.
@@ -58,8 +56,7 @@ This plugin handles privacy concerns by looking at a manually specified
 list of mailing lists inside the trac.ini configuration file, and
 preventing searches or browsing on those lists. NOTE: this functionality
 is disabled for **all** users, including those who may have the proper
-permissions. It is conceivable that this feature is changed in later
-versions of the plugin.
+permissions.
 
 Installation
 ------------
@@ -78,7 +75,7 @@ Installation
 8. Set up a cron job or some script to periodically run swish-e.sh to
    re-index the archives to keep the search up-to-date.
 
-.. [*] The private mailman archive (``/var/lib/mailman/archives/private``)
+.. [*] The private mailman archive (*e.g.*, ``/var/lib/mailman/archives/private``)
    has read permission restricted to root or the mailman group, by default. In
    order for Trac to be able to read these files, and the Swish-e script to be
    able index these files, they must be run with appropriate permissions.

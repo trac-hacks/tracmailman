@@ -41,13 +41,13 @@ filterwarnings('ignore', '.* string exception', DeprecationWarning)
 
 # Check if ja/ko codecs are available before changing path.
 try:
-    s = unicode('OK', 'iso-2022-jp')
+    s = 'OK'.encode('iso-2022-jp')
     jaok = True
 except LookupError:
     jaok = False
 
 try:
-    s = unicode('OK', 'euc-kr')
+    s = 'OK'.encode('euc-kr')
     kook = True
 except LookupError:
     kook = False

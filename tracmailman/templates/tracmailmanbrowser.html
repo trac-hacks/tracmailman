@@ -1,21 +1,30 @@
-<!DOCTYPE html
-	  PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
-	  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml"
-      xmlns:xi="http://www.w3.org/2001/XInclude"
-      xmlns:py="http://genshi.edgewall.org/">
-  <xi:include href="layout.html" />
-  
-
+# extends 'layout.html'
+<!DOCTYPE html>
+<html>
   <head>
-    <title>$title</title>
+    <title>
+      # block title
+      #   if title:
+      ${title} ${ super() }
+      #   endif
+      # endblock title
+    </title>
+
+    # block head
+    ${ super() }
+    # endblock head
   </head>
-
   <body>
-    <py:if test="authenticated">
+    # block content
+    <div id="content" class="tracmailman">
+      # if authenticated:
 
-	$contents
+${contents}
 
-    </py:if>
+      # endif
+
+      ${ super() }
+    </div>
+    # endblock content
   </body>
 </html>

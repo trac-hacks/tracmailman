@@ -1,69 +1,67 @@
-<!DOCTYPE html
-	  PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
-	  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml"
-      xmlns:xi="http://www.w3.org/2001/XInclude"
-      xmlns:py="http://genshi.edgewall.org/">
-  <xi:include href="layout.html" />
-
-
+# extends 'layout.html'
+<!DOCTYPE html>
+<html>
   <head>
-    <title>$title</title>
-	<style type="text/css">
-      table.updateMessages
-      {
-      background-color: lightyellow;
-      border-collapse: collapse; border: 1px solid black;
-      }
-    </style>
+    <title>
+      # block title
+      #   if title:
+      ${title} ${ super() }
+      #   endif
+      # endblock title
+    </title>
+
+    # block head
+    ${ super() }
+    # endblock head
   </head>
   <body>
-
-    <div id="content" class="tracswishe">
+    # block content
+    <div id="content" class="tracmailman">
       <h1>Mailing List Search</h1>
 
-      <py:if test="authenticated">
-	<form action="search" method="get" id="update">
-	  <input type="text" name="query" value="$query"/>
-	  <select name="search_list">
-        <option value="all">All lists</option>
-        <py:for each="list in mail_archives">
-            <py:choose test="search_list">
-                <py:when test="list"><option value="$list" selected="True">$list</option></py:when>
-                <py:otherwise><option value="$list">$list</option></py:otherwise>
-            </py:choose>
-        </py:for>
-      </select>
-	  <input type="submit" value="Search"/>
-	</form>
+      # if authenticated:
+      <form action="search" method="get" id="update">
+        <p>
+          <label for="query">Query: <input type="text" name="query" id="query" value="${query}"/></label>
+          <label for="search_list">List Name:
+            <select name="search_list" id="search_list">
+              <option value="all" ${{'selected': search_list == 'all'}|htmlattr}>All lists</option>
+              # for list in mail_archives:
+              <option value="${list}" ${{'selected': search_list == list}|htmlattr}>${list}</option>
+              # endfor
+            </select>
+          </label>
+          <input type="submit" value="Search" />
+        </p>
+        <p class="help">Documentation on all search capabilities can be found <a href="https://www.esa.org/tiee/search/html/swish-search.html#searching_syntax_and_operations">here</a>.</p>
+      </form>
 
-	<py:if test="numHits == 0">
-	  <h2>No results</h2>
-	</py:if>
-	<py:if test="results">
-	  <h2>Results: $numHits found. Displaying results ${firstHit+1} to $lastHit</h2>
-	  <hr/>
-	  <py:for each="hit in results">
-	    <p>
-	      $hit.number . <a href="$hit.path">$hit.title</a>
-	      <br/>
-	      <i>$hit.description ...</i>
-	      <br/>
-	    </p>
-	  </py:for>
-	  <p>Result Navigation:
-	    <py:for each="i in range(0, maxPage)">
-	      <py:if test="i == currentPage">
-		${i+1}
-	      </py:if>
-	      <py:if test="not i == currentPage">
-		<a href="search?query=$query&amp;search_list=$search_list&amp;page=${i+1}">${i+1}</a>
-	      </py:if>
-	    </py:for>
-	  </p>
+      # if numHits == 0:
+      <h2>No results were found.</h2>
+      # endif
 
-	</py:if>
-      </py:if>
+      # if results:
+      <h2>Results: ${numHits} found. Displaying results ${firstHit+1} to ${lastHit}.</h2>
+      <h3>More recent results are displayed first.</h3>
+      <p>Result Navigation:
+      # for i in range(0, maxPage):
+      # if i == currentPage:
+      ${i+1}
+      # else:
+      <a href="search?query=${query}&amp;search_list=${search_list}&amp;page=${i+1}">${i+1}</a>
+      # endif
+      # endfor
+      </p>
+      <hr/>
+      # for hit in results:
+      <p>${hit.number}. <a href="${hit.path}">${hit.title}</a><br/>${hit.description} &hellip;</p>
+      # endfor
+      # endif
+
+      # endif
+
+      ${ super() }
     </div>
+    # endblock content
   </body>
 </html>

@@ -1,2 +1,2 @@
-from tracmailman import *
+from . import paths, web_ui
 
